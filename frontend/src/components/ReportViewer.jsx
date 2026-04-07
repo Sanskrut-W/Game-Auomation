@@ -1,50 +1,102 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Rnd } from 'react-rnd';
 
-// Renders an image with glowing bounding boxes based on actual image pixel coordinates
-function ImageWithOverlays({ src, buttons, viewport }) {
+// Renders an image with glowing bounding boxes. If isInteractive is true, wraps them in Draggable/Resizable Rnd.
+function ImageWithOverlays({ src, buttons, viewport, isInteractive, onChange }) {
     const baseW = viewport?.w || 1280;
     const baseH = viewport?.h || 720;
+    
+    const containerRef = useRef(null);
+    const [scale, setScale] = useState(1);
+
+    useEffect(() => {
+        if (!containerRef.current) return;
+        const observer = new ResizeObserver((entries) => {
+            for (let entry of entries) {
+                setScale(entry.contentRect.width / baseW);
+            }
+        });
+        observer.observe(containerRef.current);
+        return () => observer.disconnect();
+    }, [baseW]);
 
     return (
-        <div style={{ position: 'relative', width: '100%', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', overflow: 'hidden' }}>
-            <img src={src} alt="Game Snapshot" style={{ display: 'block', width: '100%', height: 'auto' }} />
+        <div ref={containerRef} style={{ position: 'relative', width: '100%', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', overflow: 'hidden' }}>
+            <img src={src} alt="Game Snapshot" style={{ display: 'block', width: '100%', height: 'auto', pointerEvents: 'none' }} />
+            
             {buttons && buttons.map((btn, i) => {
-                let left = (btn.x1 / baseW) * 100;
-                let top = (btn.y1 / baseH) * 100;
-                let width = ((btn.x2 - btn.x1) / baseW) * 100;
-                let height = ((btn.y2 - btn.y1) / baseH) * 100;
+                let boxW = (btn.x2 - btn.x1);
+                let boxH = (btn.y2 - btn.y1);
                 
-                // Enforce minimum visible size (at least 3% wide, 4% tall)
-                if (width < 3) { const pad = (3 - width) / 2; left -= pad; width = 3; }
-                if (height < 4) { const pad = (4 - height) / 2; top -= pad; height = 4; }
+                // Keep sizes sane for UI rendering
+                if (boxW < 40) boxW = 40;
+                if (boxH < 40) boxH = 40;
 
-                // Clamp to keep within image bounds
-                if (left < 0) left = 0;
-                if (top < 0) top = 0;
-                if (left + width > 100) left = 100 - width;
-                if (top + height > 100) top = 100 - height;
-                
-                return (
-                    <div key={i} style={{
-                        position: 'absolute',
-                        left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%`,
-                        border: '2px solid #00ff88',
-                        backgroundColor: 'rgba(0,255,136,0.15)',
-                        boxShadow: '0 0 12px rgba(0,255,136,0.6), inset 0 0 8px rgba(0,255,136,0.2)',
-                        pointerEvents: 'none',
-                        zIndex: 10,
-                        borderRadius: '4px'
+                const scaledX = btn.x1 * scale;
+                const scaledY = btn.y1 * scale;
+                const scaledW = boxW * scale;
+                const scaledH = boxH * scale;
+
+                const innerLabel = (
+                    <div style={{
+                        position: 'absolute', bottom: '100%', left: '-2px',
+                        background: isInteractive ? '#3b82f6' : 'rgba(0,0,0,0.85)', 
+                        color: isInteractive ? '#fff' : '#00ff88',
+                        fontSize: '0.6rem', fontWeight: 'bold',
+                        padding: '2px 5px', borderRadius: '3px 3px 0 0',
+                        whiteSpace: 'nowrap', lineHeight: '1.2'
                     }}>
-                        <div style={{
-                            position: 'absolute', bottom: '100%', left: '0px',
-                            background: 'rgba(0,0,0,0.85)', color: '#00ff88',
-                            fontSize: '0.6rem', fontWeight: 'bold',
-                            padding: '2px 5px', borderRadius: '3px 3px 0 0',
-                            whiteSpace: 'nowrap', lineHeight: '1.2'
-                        }}>
-                            {btn.name}
-                        </div>
+                        {btn.name} {isInteractive && '✋'}
                     </div>
+                );
+
+                if (!isInteractive) {
+                    return (
+                        <div key={i} style={{
+                            position: 'absolute',
+                            left: scaledX, top: scaledY, width: scaledW, height: scaledH,
+                            border: '2px solid #00ff88',
+                            backgroundColor: 'rgba(0,255,136,0.15)',
+                            boxShadow: '0 0 12px rgba(0,255,136,0.6), inset 0 0 8px rgba(0,255,136,0.2)',
+                            pointerEvents: 'none',
+                            zIndex: 10,
+                            borderRadius: '4px'
+                        }}>
+                            {innerLabel}
+                        </div>
+                    );
+                }
+
+                // Interactive Mode
+                return (
+                    <Rnd
+                        key={i}
+                        bounds="parent"
+                        size={{ width: scaledW, height: scaledH }}
+                        position={{ x: scaledX, y: scaledY }}
+                        onDragStop={(e, d) => {
+                            const newX1 = Math.round(d.x / scale);
+                            const newY1 = Math.round(d.y / scale);
+                            onChange(i, { ...btn, x1: newX1, y1: newY1, x2: newX1 + boxW, y2: newY1 + boxH });
+                        }}
+                        onResizeStop={(e, direction, ref, delta, position) => {
+                            const newX1 = Math.round(position.x / scale);
+                            const newY1 = Math.round(position.y / scale);
+                            const newX2 = newX1 + Math.round(ref.offsetWidth / scale);
+                            const newY2 = newY1 + Math.round(ref.offsetHeight / scale);
+                            onChange(i, { ...btn, x1: newX1, y1: newY1, x2: newX2, y2: newY2 });
+                        }}
+                        style={{
+                            border: '2px dashed #3b82f6',
+                            backgroundColor: 'rgba(59,130,246,0.25)',
+                            boxShadow: '0 0 8px rgba(59,130,246,0.5)',
+                            zIndex: 20,
+                            borderRadius: '4px',
+                            cursor: 'move'
+                        }}
+                    >
+                        {innerLabel}
+                    </Rnd>
                 );
             })}
         </div>
@@ -74,11 +126,22 @@ function CoordTag({ button }) {
 export default function ReportViewer({ reportId, onBack }) {
     const [data, setData] = useState(null);
     const [executing, setExecuting] = useState(false);
+    const [localButtons, setLocalButtons] = useState(null);
+
+    // Reset local state when switching tests
+    useEffect(() => {
+        setLocalButtons(null);
+        setData(null);
+    }, [reportId]);
 
     const fetchData = async () => {
         try {
             const res = await fetch(`/api/tests/reports/${reportId}`);
-            if (res.ok) setData(await res.json());
+            if (res.ok) {
+                const json = await res.json();
+                setData(json);
+                setLocalButtons(prev => prev || json.detectedButtons);
+            }
         } catch(e) {}
     };
 
@@ -91,7 +154,11 @@ export default function ReportViewer({ reportId, onBack }) {
     const handleExecutePhase2 = async () => {
         setExecuting(true);
         try {
-            const res = await fetch(`/api/tests/execute-test/${reportId}`, { method: 'POST' });
+            const res = await fetch(`/api/tests/execute-test/${reportId}`, { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ updatedCoordinates: localButtons })
+            });
             if (!res.ok) {
                 let msg = `Error (${res.status})`;
                 try { const d = await res.json(); msg = d.error || msg; } catch(e) {}
@@ -188,11 +255,32 @@ export default function ReportViewer({ reportId, onBack }) {
 
                     {data.screenshotPath && (
                         <div style={{ marginBottom: '16px' }}>
-                            <p className="form-label" style={{ marginBottom: '8px' }}>Game Screenshot (Phase 1)</p>
+                            <p className="form-label" style={{ marginBottom: '8px' }}>
+                                Game Screenshot (Phase 1)
+                                {isPhase1Done && <span style={{ marginLeft: '10px', color: 'var(--primary)' }}>👉 Feel free to drag or resize these boxes before running Phase 2!</span>}
+                            </p>
                             <ImageWithOverlays 
                                 src={data.screenshotPath} 
-                                buttons={data.detectedButtons} 
+                                buttons={localButtons || data.detectedButtons} 
                                 viewport={data.viewport} 
+                                isInteractive={isPhase1Done}
+                                onChange={(idx, newVal) => {
+                                    if (!localButtons) return;
+                                    const copy = [...localButtons];
+                                    
+                                    // Derive CSS scaling ratio so Phase 2 Playwright clicks remain accurate
+                                    const orig = data.detectedButtons[idx];
+                                    const ratioX = orig.x1 > 0 ? (orig.cssX1 / orig.x1) : (orig.x2 > 0 ? (orig.cssX2 / orig.x2) : 1);
+                                    const ratioY = orig.y1 > 0 ? (orig.cssY1 / orig.y1) : (orig.y2 > 0 ? (orig.cssY2 / orig.y2) : 1);
+
+                                    newVal.cssX1 = Math.round(newVal.x1 * ratioX);
+                                    newVal.cssY1 = Math.round(newVal.y1 * ratioY);
+                                    newVal.cssX2 = Math.round(newVal.x2 * ratioX);
+                                    newVal.cssY2 = Math.round(newVal.y2 * ratioY);
+
+                                    copy[idx] = newVal;
+                                    setLocalButtons(copy);
+                                }}
                             />
                         </div>
                     )}

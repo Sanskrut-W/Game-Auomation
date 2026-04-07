@@ -51,8 +51,11 @@ router.post('/run-test', async (req, res) => {
             .then((result) => {
                 const logEntries = result.logs.map(m => ({ timestamp: new Date(), message: m }));
                 if (result.detectedButtons.length > 0) {
+                    const coordsPath = path.join(__dirname, '..', `coordinates-${testRun._id}.json`);
+                    try { fs.writeFileSync(coordsPath, JSON.stringify(result.detectedButtons, null, 2)); } catch(e){}
+
                     updateTestRun(testRun._id, {
-                        status: 'Detected',
+                        status: 'Detected', // Stays here. Awaiting Phase 2.
                         phase: 1,
                         logs: logEntries,
                         detectedButtons: result.detectedButtons,
@@ -88,11 +91,30 @@ router.post('/execute-test/:id', async (req, res) => {
         return res.status(400).json({ error: 'No detected buttons to execute. Run Phase 1 first.' });
     }
 
-    // Mark as running Phase 2
-    updateTestRun(testRun._id, { status: 'Running', phase: 2 });
+    // Did the UI send updated coordinates?
+    let finalCoords = req.body.updatedCoordinates || null;
+    console.log('[DEBUG] Received finalCoords from UI:', finalCoords ? 'YES (length ' + finalCoords.length + ')' : 'NO');
+
+    // If no UI overrides, check if the coordinates file was manually edited on disk
+    if (!finalCoords) {
+        const coordsPath = path.join(__dirname, '..', `coordinates-${testRun._id}.json`);
+        try {
+            if (fs.existsSync(coordsPath)) {
+                finalCoords = JSON.parse(fs.readFileSync(coordsPath, 'utf8'));
+            }
+        } catch(e) { console.error('Failed to parse coordinates file', e); }
+    }
+
+    // Fallback to original memory state if neither exists
+    if (!finalCoords) {
+        finalCoords = testRun.detectedButtons;
+    }
+
+    // Update memory to the final executing coordinates
+    updateTestRun(testRun._id, { status: 'Running', phase: 2, detectedButtons: finalCoords });
     res.status(202).json({ message: 'Phase 2: Execution started' });
 
-    executeGameActions(testRun._id, testRun.url, testRun.detectedButtons, testRun.config)
+    executeGameActions(testRun._id, testRun.url, finalCoords, testRun.config)
         .then((result) => {
             const existingLogs = testRun.logs || [];
             const newLogs = result.logs.map(m => ({ timestamp: new Date(), message: m }));

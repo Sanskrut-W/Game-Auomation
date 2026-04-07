@@ -1,0 +1,93 @@
+[
+  {
+    "name": "Menu Button",
+    "type": "menu",
+    "confidence": 1,
+    "x1": 25,
+    "y1": 867,
+    "x2": 94,
+    "y2": 923,
+    "cssX1": 25,
+    "cssY1": 867,
+    "cssX2": 94,
+    "cssY2": 923
+  },
+  {
+    "name": "Decrease Bet Button",
+    "type": "decrease_bet",
+    "confidence": 1,
+    "x1": 290,
+    "y1": 867,
+    "x2": 361,
+    "y2": 923,
+    "cssX1": 290,
+    "cssY1": 867,
+    "cssX2": 361,
+    "cssY2": 923
+  },
+  {
+    "name": "Increase Bet Button",
+    "type": "increase_bet",
+    "confidence": 1,
+    "x1": 430,
+    "y1": 867,
+    "x2": 499,
+    "y2": 923,
+    "cssX1": 430,
+    "cssY1": 867,
+    "cssX2": 499,
+    "cssY2": 923
+  },
+  {
+    "name": "Spin Button",
+    "type": "spin",
+    "confidence": 1,
+    "x1": 540,
+    "y1": 857,
+    "x2": 630,
+    "y2": 932,
+    "cssX1": 540,
+    "cssY1": 857,
+    "cssX2": 630,
+    "cssY2": 932
+  },
+  {
+    "name": "Auto Spin Button",
+    "type": "auto_spin",
+    "confidence": 1,
+    "x1": 651,
+    "y1": 867,
+    "x2": 720,
+    "y2": 923,
+    "cssX1": 651,
+    "cssY1": 867,
+    "cssX2": 720,
+    "cssY2": 923
+  },
+  {
+    "name": "Turbo Button",
+    "type": "turbo",
+    "confidence": 1,
+    "x1": 851,
+    "y1": 873,
+    "x2": 891,
+    "y2": 917,
+    "cssX1": 851,
+    "cssY1": 873,
+    "cssX2": 891,
+    "cssY2": 917
+  },
+  {
+    "name": "Sound Button",
+    "type": "sound",
+    "confidence": 1,
+    "x1": 900,
+    "y1": 873,
+    "x2": 941,
+    "y2": 917,
+    "cssX1": 900,
+    "cssY1": 873,
+    "cssX2": 941,
+    "cssY2": 917
+  }
+]
