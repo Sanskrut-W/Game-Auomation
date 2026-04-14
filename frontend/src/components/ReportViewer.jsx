@@ -2,41 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { Rnd } from 'react-rnd';
 
 // Renders an image with glowing bounding boxes. If isInteractive is true, wraps them in Draggable/Resizable Rnd.
-function ImageWithOverlays({ src, buttons, viewport, isInteractive, onChange }) {
-    const baseW = viewport?.w || 1280;
-    const baseH = viewport?.h || 720;
-    
+function ImageWithOverlays({ src, buttons, isInteractive, onChange }) {
     const containerRef = useRef(null);
-    const [scale, setScale] = useState(1);
-
-    useEffect(() => {
-        if (!containerRef.current) return;
-        const observer = new ResizeObserver((entries) => {
-            for (let entry of entries) {
-                setScale(entry.contentRect.width / baseW);
-            }
-        });
-        observer.observe(containerRef.current);
-        return () => observer.disconnect();
-    }, [baseW]);
 
     return (
         <div ref={containerRef} style={{ position: 'relative', width: '100%', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', overflow: 'hidden' }}>
             <img src={src} alt="Game Snapshot" style={{ display: 'block', width: '100%', height: 'auto', pointerEvents: 'none' }} />
             
             {buttons && buttons.map((btn, i) => {
-                let boxW = (btn.x2 - btn.x1);
-                let boxH = (btn.y2 - btn.y1);
-                
-                // Keep sizes sane for UI rendering
-                if (boxW < 40) boxW = 40;
-                if (boxH < 40) boxH = 40;
-
-                const scaledX = btn.x1 * scale;
-                const scaledY = btn.y1 * scale;
-                const scaledW = boxW * scale;
-                const scaledH = boxH * scale;
-
                 const innerLabel = (
                     <div style={{
                         position: 'absolute', bottom: '100%', left: '-2px',
@@ -54,7 +27,8 @@ function ImageWithOverlays({ src, buttons, viewport, isInteractive, onChange }) 
                     return (
                         <div key={i} style={{
                             position: 'absolute',
-                            left: scaledX, top: scaledY, width: scaledW, height: scaledH,
+                            left: `${btn.pX1 * 100}%`, top: `${btn.pY1 * 100}%`, 
+                            width: `${(btn.pX2 - btn.pX1) * 100}%`, height: `${(btn.pY2 - btn.pY1) * 100}%`,
                             border: '2px solid #00ff88',
                             backgroundColor: 'rgba(0,255,136,0.15)',
                             boxShadow: '0 0 12px rgba(0,255,136,0.6), inset 0 0 8px rgba(0,255,136,0.2)',
@@ -72,19 +46,29 @@ function ImageWithOverlays({ src, buttons, viewport, isInteractive, onChange }) 
                     <Rnd
                         key={i}
                         bounds="parent"
-                        size={{ width: scaledW, height: scaledH }}
-                        position={{ x: scaledX, y: scaledY }}
+                        size={{ width: `${(btn.pX2 - btn.pX1) * 100}%`, height: `${(btn.pY2 - btn.pY1) * 100}%` }}
+                        position={{ x: (btn.pX1 * (containerRef.current?.offsetWidth || 1)), y: (btn.pY1 * (containerRef.current?.offsetHeight || 1)) }}
                         onDragStop={(e, d) => {
-                            const newX1 = Math.round(d.x / scale);
-                            const newY1 = Math.round(d.y / scale);
-                            onChange(i, { ...btn, x1: newX1, y1: newY1, x2: newX1 + boxW, y2: newY1 + boxH });
+                            if (!containerRef.current) return;
+                            const w = containerRef.current.offsetWidth;
+                            const h = containerRef.current.offsetHeight;
+                            const newPx1 = d.x / w;
+                            const newPy1 = d.y / h;
+                            const widthPercent = btn.pX2 - btn.pX1;
+                            const heightPercent = btn.pY2 - btn.pY1;
+
+                            onChange(i, { ...btn, pX1: newPx1, pY1: newPy1, pX2: newPx1 + widthPercent, pY2: newPy1 + heightPercent });
                         }}
                         onResizeStop={(e, direction, ref, delta, position) => {
-                            const newX1 = Math.round(position.x / scale);
-                            const newY1 = Math.round(position.y / scale);
-                            const newX2 = newX1 + Math.round(ref.offsetWidth / scale);
-                            const newY2 = newY1 + Math.round(ref.offsetHeight / scale);
-                            onChange(i, { ...btn, x1: newX1, y1: newY1, x2: newX2, y2: newY2 });
+                            if (!containerRef.current) return;
+                            const w = containerRef.current.offsetWidth;
+                            const h = containerRef.current.offsetHeight;
+                            const newPx1 = position.x / w;
+                            const newPy1 = position.y / h;
+                            const newPx2 = newPx1 + (ref.offsetWidth / w);
+                            const newPy2 = newPy1 + (ref.offsetHeight / h);
+
+                            onChange(i, { ...btn, pX1: newPx1, pY1: newPy1, pX2: newPx2, pY2: newPy2 });
                         }}
                         style={{
                             border: '2px dashed #3b82f6',
@@ -104,10 +88,9 @@ function ImageWithOverlays({ src, buttons, viewport, isInteractive, onChange }) 
 }
 
 function CoordTag({ button }) {
-    const cx = Math.round((button.x1 + button.x2) / 2);
-    const cy = Math.round((button.y1 + button.y2) / 2);
     return (
         <div style={{
+
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '8px 12px', background: 'var(--bg)', border: '1px solid var(--border)',
             borderRadius: '6px', marginBottom: '6px', gap: '8px'
@@ -116,9 +99,6 @@ function CoordTag({ button }) {
                 <span style={{ fontSize: '1rem' }}>🎯</span>
                 <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{button.name}</span>
             </div>
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'var(--accent)', whiteSpace: 'nowrap' }}>
-                click ({cx}, {cy})
-            </span>
         </div>
     );
 }
@@ -127,11 +107,13 @@ export default function ReportViewer({ reportId, onBack }) {
     const [data, setData] = useState(null);
     const [executing, setExecuting] = useState(false);
     const [localButtons, setLocalButtons] = useState(null);
+    const [selectedTCs, setSelectedTCs] = useState(new Set());
 
     // Reset local state when switching tests
     useEffect(() => {
         setLocalButtons(null);
         setData(null);
+        setSelectedTCs(new Set());
     }, [reportId]);
 
     const fetchData = async () => {
@@ -141,6 +123,10 @@ export default function ReportViewer({ reportId, onBack }) {
                 const json = await res.json();
                 setData(json);
                 setLocalButtons(prev => prev || json.detectedButtons);
+                // Initialize all TCs as selected on first load
+                if (json.detectedButtons && json.detectedButtons.length > 0) {
+                    setSelectedTCs(prev => prev.size === 0 ? new Set(json.detectedButtons.map((_, i) => i)) : prev);
+                }
             }
         } catch(e) {}
     };
@@ -151,13 +137,15 @@ export default function ReportViewer({ reportId, onBack }) {
         return () => clearInterval(iv);
     }, [reportId]);
 
-    const handleExecutePhase2 = async () => {
+    const handleExecutePhase2 = async (indices = null) => {
         setExecuting(true);
         try {
+            const body = { updatedCoordinates: localButtons };
+            if (indices) body.selectedIndices = indices;
             const res = await fetch(`/api/tests/execute-test/${reportId}`, { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ updatedCoordinates: localButtons })
+                body: JSON.stringify(body)
             });
             if (!res.ok) {
                 let msg = `Error (${res.status})`;
@@ -262,22 +250,10 @@ export default function ReportViewer({ reportId, onBack }) {
                             <ImageWithOverlays 
                                 src={data.screenshotPath} 
                                 buttons={localButtons || data.detectedButtons} 
-                                viewport={data.viewport} 
                                 isInteractive={isPhase1Done}
                                 onChange={(idx, newVal) => {
                                     if (!localButtons) return;
                                     const copy = [...localButtons];
-                                    
-                                    // Derive CSS scaling ratio so Phase 2 Playwright clicks remain accurate
-                                    const orig = data.detectedButtons[idx];
-                                    const ratioX = orig.x1 > 0 ? (orig.cssX1 / orig.x1) : (orig.x2 > 0 ? (orig.cssX2 / orig.x2) : 1);
-                                    const ratioY = orig.y1 > 0 ? (orig.cssY1 / orig.y1) : (orig.y2 > 0 ? (orig.cssY2 / orig.y2) : 1);
-
-                                    newVal.cssX1 = Math.round(newVal.x1 * ratioX);
-                                    newVal.cssY1 = Math.round(newVal.y1 * ratioY);
-                                    newVal.cssX2 = Math.round(newVal.x2 * ratioX);
-                                    newVal.cssY2 = Math.round(newVal.y2 * ratioY);
-
                                     copy[idx] = newVal;
                                     setLocalButtons(copy);
                                 }}
@@ -286,15 +262,62 @@ export default function ReportViewer({ reportId, onBack }) {
                     )}
 
                     {isPhase1Done && (
-                        <button
-                            className="btn-primary"
-                            onClick={handleExecutePhase2}
-                            disabled={executing}
-                        >
-                            {executing
-                                ? <><span className="spinner"></span> Starting Phase 2...</>
-                                : `▶ Execute Phase 2 — Click All ${data.detectedButtons.length} Detected Buttons`}
-                        </button>
+                        <div style={{ marginTop: '16px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                                <p className="form-label" style={{ margin: 0 }}>📋 Select Test Cases to Execute</p>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button className="btn-ghost" style={{ fontSize: '0.75rem', padding: '4px 10px' }}
+                                        onClick={() => setSelectedTCs(new Set(data.detectedButtons.map((_, i) => i)))}>
+                                        Select All
+                                    </button>
+                                    <button className="btn-ghost" style={{ fontSize: '0.75rem', padding: '4px 10px' }}
+                                        onClick={() => setSelectedTCs(new Set())}>
+                                        Deselect All
+                                    </button>
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '16px' }}>
+                                {(localButtons || data.detectedButtons).map((btn, i) => (
+                                    <label key={i} style={{
+                                        display: 'flex', alignItems: 'center', gap: '10px',
+                                        padding: '8px 12px', background: selectedTCs.has(i) ? 'rgba(59,130,246,0.1)' : 'var(--bg)',
+                                        border: `1px solid ${selectedTCs.has(i) ? 'var(--primary)' : 'var(--border)'}`,
+                                        borderRadius: '6px', cursor: 'pointer', transition: 'all 0.15s'
+                                    }}>
+                                        <input type="checkbox" checked={selectedTCs.has(i)}
+                                            onChange={() => {
+                                                const next = new Set(selectedTCs);
+                                                next.has(i) ? next.delete(i) : next.add(i);
+                                                setSelectedTCs(next);
+                                            }}
+                                            style={{ width: '16px', height: '16px', accentColor: 'var(--primary)' }}
+                                        />
+                                        <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>TC{String(i + 2).padStart(2, '0')}</span>
+                                        <span style={{ fontSize: '0.82rem', color: 'var(--text-dim)' }}>{btn.name}</span>
+                                    </label>
+                                ))}
+                            </div>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button
+                                    className="btn-primary"
+                                    onClick={() => handleExecutePhase2([...selectedTCs])}
+                                    disabled={executing || selectedTCs.size === 0}
+                                    style={{ flex: 1 }}
+                                >
+                                    {executing
+                                        ? <><span className="spinner"></span> Running...</>
+                                        : `▶ Run Selected (${selectedTCs.size} TC${selectedTCs.size !== 1 ? 's' : ''})`}
+                                </button>
+                                <button
+                                    className="btn-ghost"
+                                    onClick={() => handleExecutePhase2()}
+                                    disabled={executing}
+                                    style={{ whiteSpace: 'nowrap' }}
+                                >
+                                    ▶▶ Run All ({data.detectedButtons.length})
+                                </button>
+                            </div>
+                        </div>
                     )}
                 </div>
             )}
@@ -339,7 +362,6 @@ export default function ReportViewer({ reportId, onBack }) {
                                             <ImageWithOverlays 
                                                 src={tc.beforeScreenshot} 
                                                 buttons={tc.coordinatesUsed ? [tc.coordinatesUsed] : []} 
-                                                viewport={data.viewport}
                                             />
                                         </div>
                                     )}
@@ -353,8 +375,7 @@ export default function ReportViewer({ reportId, onBack }) {
                                         {tc.logs?.map((l, j) => <div key={j} className="log-line">&gt; {l}</div>)}
                                         {tc.coordinatesUsed && !Array.isArray(tc.coordinatesUsed) && (
                                             <div className="log-coord">
-                                                📍 Box: ({tc.coordinatesUsed.x1},{tc.coordinatesUsed.y1}) → ({tc.coordinatesUsed.x2},{tc.coordinatesUsed.y2})
-                                                &nbsp;| Click: ({Math.round((tc.coordinatesUsed.x1+tc.coordinatesUsed.x2)/2)}, {Math.round((tc.coordinatesUsed.y1+tc.coordinatesUsed.y2)/2)})
+                                                📍 Box: X({(tc.coordinatesUsed.pX1*100).toFixed(1)}% → {(tc.coordinatesUsed.pX2*100).toFixed(1)}%) | Y({(tc.coordinatesUsed.pY1*100).toFixed(1)}% → {(tc.coordinatesUsed.pY2*100).toFixed(1)}%)
                                             </div>
                                         )}
                                     </div>

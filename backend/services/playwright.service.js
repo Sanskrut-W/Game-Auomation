@@ -132,58 +132,21 @@ async function detectGameElements(testRunId, rawUrl, config = {}) {
         await page.screenshot({ path: screenshotPath });
         log(`📸 Screenshot captured. Sending to Gemini Vision...`);
 
-        // ── KEY FIX: Read actual screenshot image dimensions, NOT viewport ──
-        // Gemini's 0-1000 coordinates are relative to the IMAGE it analyzes.
-        // On Windows with DPI scaling (125%, 150%), the screenshot's pixel dimensions
-        // differ from CSS viewport dimensions. We need BOTH:
-        //   - Image dimensions → for mapping Gemini coords to overlay bounding boxes
-        //   - CSS viewport    → for Playwright mouse clicks (which use CSS coords)
-        const imgBuffer = fs.readFileSync(screenshotPath);
-        const pngData = PNG.sync.read(imgBuffer);
-        const imgWidth = pngData.width;
-        const imgHeight = pngData.height;
-        log(`📐 Actual screenshot image dimensions: ${imgWidth}x${imgHeight}`);
-
-        // Also get CSS viewport for click coordinate conversion
-        const cssViewport = await page.evaluate(() => ({
-            w: window.innerWidth,
-            h: window.innerHeight
-        }));
-        log(`📐 CSS viewport dimensions: ${cssViewport.w}x${cssViewport.h}`);
-
-        // Compute device pixel ratio (DPR)
-        const dprX = imgWidth / cssViewport.w;
-        const dprY = imgHeight / cssViewport.h;
-        log(`📐 Detected DPR: ${dprX.toFixed(2)}x${dprY.toFixed(2)}`);
-
-        // Store dimensions for frontend overlay rendering
-        viewportDimensions = { w: imgWidth, h: imgHeight };
-
-        // Call Gemini ONCE
+        // Call Gemini ONCE (uses box_2d prompt + thumbnail approach from reference)
         const rawButtons = await detectButtons(screenshotPath);
 
-        // Map 1000-bin coordinates to ACTUAL IMAGE dimensions (for overlays)
-        // AND to CSS dimensions (for Playwright clicks in Phase 2)
-        detectedButtons = rawButtons
-            .filter(b => b.confidence == null || b.confidence >= 0.7)
-            .map(b => ({
-                name: b.name,
-                type: b.type || 'unknown',
-                confidence: b.confidence || 1.0,
-                // Image-space coordinates (for frontend overlay rendering)
-                x1: Math.round((b.xmin / 1000) * imgWidth),
-                y1: Math.round((b.ymin / 1000) * imgHeight),
-                x2: Math.round((b.xmax / 1000) * imgWidth),
-                y2: Math.round((b.ymax / 1000) * imgHeight),
-                // CSS-space coordinates (for Playwright mouse.click in Phase 2)
-                cssX1: Math.round((b.xmin / 1000) * cssViewport.w),
-                cssY1: Math.round((b.ymin / 1000) * cssViewport.h),
-                cssX2: Math.round((b.xmax / 1000) * cssViewport.w),
-                cssY2: Math.round((b.ymax / 1000) * cssViewport.h)
-            }));
+        // Map 0-1000 coordinates to pure 0.0-1.0 percentage ratios
+        detectedButtons = rawButtons.map(b => ({
+            name: b.name,
+            // Percentage ratios (0.0 to 1.0) — universally fluid
+            pX1: b.xmin / 1000,
+            pY1: b.ymin / 1000,
+            pX2: b.xmax / 1000,
+            pY2: b.ymax / 1000
+        }));
 
-        log(`✅ Gemini detected ${detectedButtons.length} interactive elements (img: ${imgWidth}x${imgHeight}, css: ${cssViewport.w}x${cssViewport.h}):`);
-        detectedButtons.forEach(b => log(`   • [${b.type}] ${b.name}: img(${b.x1},${b.y1})→(${b.x2},${b.y2}) | css(${b.cssX1},${b.cssY1})→(${b.cssX2},${b.cssY2}) - conf: ${b.confidence}`));
+        log(`✅ Gemini detected ${detectedButtons.length} interactive elements:`);
+        detectedButtons.forEach(b => log(`   • ${b.name}: X(${(b.pX1*100).toFixed(1)}% → ${(b.pX2*100).toFixed(1)}%) Y(${(b.pY1*100).toFixed(1)}% → ${(b.pY2*100).toFixed(1)}%)`));
 
     } catch (e) {
         log(`❌ Phase 1 Error: ${e.message}`);
@@ -195,8 +158,7 @@ async function detectGameElements(testRunId, rawUrl, config = {}) {
     return { 
         logs, 
         detectedButtons, 
-        screenshotPath: screenshotPath ? `/screenshots/${testRunId}/phase1-game-loaded.png` : null, 
-        viewport: viewportDimensions 
+        screenshotPath: screenshotPath ? `/screenshots/${testRunId}/phase1-game-loaded.png` : null
     };
 }
 
@@ -303,6 +265,13 @@ async function executeGameActions(testRunId, rawUrl, detectedButtons, config = {
         log(`⏳ Waiting 30s for game to stabilize...`);
         await page.waitForTimeout(30000);
 
+        // Calculate CURRENT viewport safely
+        const cssViewport = await page.evaluate(() => ({
+            w: window.innerWidth,
+            h: window.innerHeight
+        }));
+        log(`📐 Current CSS Viewport: ${cssViewport.w}x${cssViewport.h}`);
+
         // Execute each detected button as a test case
         log(`🎮 Starting execution of ${detectedButtons.length} detected buttons...`);
 
@@ -310,11 +279,12 @@ async function executeGameActions(testRunId, rawUrl, detectedButtons, config = {
             const button = detectedButtons[i];
             const tcName = `TC${String(i + 2).padStart(2, '0')}: Click ${button.name}`;
             const tcId = `TC${String(i + 2).padStart(2, '0')}`;
-            // Use CSS-space coordinates for Playwright clicks (not image-space)
-            const cssX1 = button.cssX1 ?? button.x1;
-            const cssY1 = button.cssY1 ?? button.y1;
-            const cssX2 = button.cssX2 ?? button.x2;
-            const cssY2 = button.cssY2 ?? button.y2;
+            
+            // Map the fluid percentage back to absolute physical clicks for this precise browser context
+            const cssX1 = Math.round(button.pX1 * cssViewport.w);
+            const cssY1 = Math.round(button.pY1 * cssViewport.h);
+            const cssX2 = Math.round(button.pX2 * cssViewport.w);
+            const cssY2 = Math.round(button.pY2 * cssViewport.h);
             const center = getCenter(cssX1, cssY1, cssX2, cssY2);
 
             // Apply ±5px random jitter
@@ -360,7 +330,16 @@ async function executeGameActions(testRunId, rawUrl, detectedButtons, config = {
                 log(`⚠️ Error during visual diffing: ${err.message}`);
             }
 
-            log(`✅ [${tcId}] Done. Pausing 1s before next action...`);
+            // ── AUTO-UNDO: Re-click the same button to reset game state ──
+            log(`🔄 [${tcId}] Undo: Re-clicking '${button.name}' to reset state...`);
+            await page.mouse.move(center.x, center.y);
+            await page.waitForTimeout(300);
+            await page.mouse.down();
+            await page.waitForTimeout(150);
+            await page.mouse.up();
+            await page.waitForTimeout(2000);  // Wait for undo animation
+
+            log(`✅ [${tcId}] Done. State reset. Pausing 1s before next action...`);
             await page.waitForTimeout(1000);
 
             reports.push({
@@ -370,10 +349,10 @@ async function executeGameActions(testRunId, rawUrl, detectedButtons, config = {
                 afterScreenshot: `/screenshots/${testRunId}/${tcId}-after.png`,
                 logs: [
                     `✅ Clicked '${button.name}'`,
-                    `Type: ${button.type} | Confidence: ${button.confidence}`,
-                    `Bounding box: (${button.x1},${button.y1}) → (${button.x2},${button.y2})`,
+                    `Bounding box: X(${(button.pX1*100).toFixed(1)}% → ${(button.pX2*100).toFixed(1)}%) | Y(${(button.pY1*100).toFixed(1)}% → ${(button.pY2*100).toFixed(1)}%)`,
                     `Target click: (${targetX}, ${targetY}) [Center: ${center.x},${center.y} | Jitter: ${jitterX},${jitterY}]`,
-                    `Visual Validation: ${isVisualChange ? 'PASSED' : 'FAILED'} (${diffPixels} pixels changed)`
+                    `Visual Validation: ${isVisualChange ? 'PASSED' : 'FAILED'} (${diffPixels} pixels changed)`,
+                    `🔄 Auto-undo: Re-clicked to reset game state`
                 ],
                 coordinatesUsed: button
             });

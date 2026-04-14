@@ -110,8 +110,15 @@ router.post('/execute-test/:id', async (req, res) => {
         finalCoords = testRun.detectedButtons;
     }
 
+    // Filter to only selected test cases if the UI sent specific indices
+    const selectedIndices = req.body.selectedIndices || null;
+    if (selectedIndices && Array.isArray(selectedIndices) && selectedIndices.length > 0) {
+        console.log(`[DEBUG] Filtering to ${selectedIndices.length} selected TCs: [${selectedIndices.join(', ')}]`);
+        finalCoords = selectedIndices.map(i => finalCoords[i]).filter(Boolean);
+    }
+
     // Update memory to the final executing coordinates
-    updateTestRun(testRun._id, { status: 'Running', phase: 2, detectedButtons: finalCoords });
+    updateTestRun(testRun._id, { status: 'Running', phase: 2, detectedButtons: testRun.detectedButtons });
     res.status(202).json({ message: 'Phase 2: Execution started' });
 
     executeGameActions(testRun._id, testRun.url, finalCoords, testRun.config)

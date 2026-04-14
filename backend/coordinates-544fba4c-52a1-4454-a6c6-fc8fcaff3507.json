@@ -1,0 +1,72 @@
+[
+  {
+    "name": "label",
+    "pX1": 0.085,
+    "pY1": 0.757,
+    "pX2": 0.161,
+    "pY2": 0.893
+  },
+  {
+    "name": "label",
+    "pX1": 0.18,
+    "pY1": 0.763,
+    "pX2": 0.281,
+    "pY2": 0.878
+  },
+  {
+    "name": "menu button (hamburger icon, usually bottom-left)",
+    "pX1": 0.075,
+    "pY1": 0.906,
+    "pX2": 0.126,
+    "pY2": 0.981
+  },
+  {
+    "name": "autospin (if present, circular arrows or auto-play icon)",
+    "pX1": 0.523,
+    "pY1": 0.9,
+    "pX2": 0.584,
+    "pY2": 0.987
+  },
+  {
+    "name": "spin button (the large circular play/arrow button)",
+    "pX1": 0.461,
+    "pY1": 0.875,
+    "pX2": 0.528,
+    "pY2": 0.994
+  },
+  {
+    "name": "max bet button",
+    "pX1": 0.417,
+    "pY1": 0.917,
+    "pX2": 0.463,
+    "pY2": 0.975
+  },
+  {
+    "name": "bet decrement (minus - button)",
+    "pX1": 0.286,
+    "pY1": 0.911,
+    "pX2": 0.335,
+    "pY2": 0.977
+  },
+  {
+    "name": "bet increment (plus + button)",
+    "pX1": 0.347,
+    "pY1": 0.911,
+    "pX2": 0.385,
+    "pY2": 0.977
+  },
+  {
+    "name": "sound/speaker icon",
+    "pX1": 0.843,
+    "pY1": 0.923,
+    "pX2": 0.887,
+    "pY2": 0.981
+  },
+  {
+    "name": "turbo/lightning bolt icon",
+    "pX1": 0.792,
+    "pY1": 0.923,
+    "pX2": 0.829,
+    "pY2": 0.981
+  }
+]

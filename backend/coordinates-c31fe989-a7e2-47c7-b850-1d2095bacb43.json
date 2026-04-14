@@ -1,0 +1,142 @@
+[
+  {
+    "name": "Mega Jackpot",
+    "pX1": 0.078,
+    "pY1": 0.079,
+    "pX2": 0.309,
+    "pY2": 0.237
+  },
+  {
+    "name": "Mega Jackpot Value",
+    "pX1": 0.116,
+    "pY1": 0.208,
+    "pX2": 0.269,
+    "pY2": 0.25
+  },
+  {
+    "name": "Major Jackpot",
+    "pX1": 0.161,
+    "pY1": 0.262,
+    "pX2": 0.233,
+    "pY2": 0.283
+  },
+  {
+    "name": "Major Jackpot Value",
+    "pX1": 0.119,
+    "pY1": 0.288,
+    "pX2": 0.268,
+    "pY2": 0.342
+  },
+  {
+    "name": "Minor Jackpot",
+    "pX1": 0.162,
+    "pY1": 0.353,
+    "pX2": 0.23,
+    "pY2": 0.375
+  },
+  {
+    "name": "Minor Jackpot Value",
+    "pX1": 0.129,
+    "pY1": 0.403,
+    "pX2": 0.255,
+    "pY2": 0.451
+  },
+  {
+    "name": "Mini Jackpot",
+    "pX1": 0.169,
+    "pY1": 0.465,
+    "pX2": 0.219,
+    "pY2": 0.487
+  },
+  {
+    "name": "Mini Jackpot Value",
+    "pX1": 0.137,
+    "pY1": 0.504,
+    "pX2": 0.251,
+    "pY2": 0.558
+  },
+  {
+    "name": "Megaways Counter",
+    "pX1": 0.471,
+    "pY1": 0.042,
+    "pX2": 0.574,
+    "pY2": 0.084
+  },
+  {
+    "name": "Credits Value",
+    "pX1": 0.137,
+    "pY1": 0.932,
+    "pX2": 0.237,
+    "pY2": 0.981
+  },
+  {
+    "name": "Bet Value",
+    "pX1": 0.308,
+    "pY1": 0.932,
+    "pX2": 0.38,
+    "pY2": 0.981
+  },
+  {
+    "name": "Win Value",
+    "pX1": 0.698,
+    "pY1": 0.932,
+    "pX2": 0.755,
+    "pY2": 0.981
+  },
+  {
+    "name": "Menu button",
+    "pX1": 0.076,
+    "pY1": 0.923,
+    "pX2": 0.12,
+    "pY2": 0.974
+  },
+  {
+    "name": "Bet Decrement",
+    "pX1": 0.268,
+    "pY1": 0.927,
+    "pX2": 0.298,
+    "pY2": 0.974
+  },
+  {
+    "name": "Max Bet button",
+    "pX1": 0.417,
+    "pY1": 0.918,
+    "pX2": 0.461,
+    "pY2": 0.978
+  },
+  {
+    "name": "Bet Increment",
+    "pX1": 0.394,
+    "pY1": 0.927,
+    "pX2": 0.424,
+    "pY2": 0.974
+  },
+  {
+    "name": "Spin button",
+    "pX1": 0.461,
+    "pY1": 0.875,
+    "pX2": 0.532,
+    "pY2": 0.996
+  },
+  {
+    "name": "Autospin",
+    "pX1": 0.541,
+    "pY1": 0.918,
+    "pX2": 0.584,
+    "pY2": 0.978
+  },
+  {
+    "name": "Turbo/lightning bolt icon",
+    "pX1": 0.825,
+    "pY1": 0.921,
+    "pX2": 0.856,
+    "pY2": 0.974
+  },
+  {
+    "name": "Sound/speaker icon",
+    "pX1": 0.86,
+    "pY1": 0.921,
+    "pX2": 0.891,
+    "pY2": 0.974
+  }
+]

@@ -1,0 +1,51 @@
+[
+  {
+    "name": "Spin button",
+    "pX1": 0.495,
+    "pY1": 0.757,
+    "pX2": 0.665,
+    "pY2": 0.99
+  },
+  {
+    "name": "Menu button",
+    "pX1": 0.276,
+    "pY1": 0.773,
+    "pX2": 0.319,
+    "pY2": 0.99
+  },
+  {
+    "name": "Bet Decrement",
+    "pX1": 0.269,
+    "pY1": 0.897,
+    "pX2": 0.29,
+    "pY2": 0.99
+  },
+  {
+    "name": "Bet Increment",
+    "pX1": 0.335,
+    "pY1": 0.897,
+    "pX2": 0.356,
+    "pY2": 0.99
+  },
+  {
+    "name": "Max Bet button",
+    "pX1": 0.388,
+    "pY1": 0.897,
+    "pX2": 0.423,
+    "pY2": 0.99
+  },
+  {
+    "name": "Sound/speaker icon",
+    "pX1": 0.819,
+    "pY1": 0.909,
+    "pX2": 0.874,
+    "pY2": 0.99
+  },
+  {
+    "name": "Turbo/lightning bolt icon",
+    "pX1": 0.755,
+    "pY1": 0.911,
+    "pX2": 0.796,
+    "pY2": 0.986
+  }
+]

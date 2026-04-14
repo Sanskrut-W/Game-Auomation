@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Menu Button",
+    "type": "menu",
+    "confidence": 1,
+    "pX1": 0.02,
+    "pY1": 0.85,
+    "pX2": 0.041,
+    "pY2": 0.889
+  },
+  {
+    "name": "Decrease Bet Button",
+    "type": "decrease_bet",
+    "confidence": 1,
+    "pX1": 0.154,
+    "pY1": 0.85,
+    "pX2": 0.175,
+    "pY2": 0.889
+  },
+  {
+    "name": "Increase Bet Button",
+    "type": "increase_bet",
+    "confidence": 1,
+    "pX1": 0.212,
+    "pY1": 0.85,
+    "pX2": 0.233,
+    "pY2": 0.889
+  },
+  {
+    "name": "Max Bet Button",
+    "type": "max_bet",
+    "confidence": 0.9,
+    "pX1": 0.249,
+    "pY1": 0.831,
+    "pX2": 0.27,
+    "pY2": 0.861
+  },
+  {
+    "name": "Spin Button",
+    "type": "spin",
+    "confidence": 1,
+    "pX1": 0.285,
+    "pY1": 0.815,
+    "pX2": 0.322,
+    "pY2": 0.898
+  },
+  {
+    "name": "Auto Spin Button",
+    "type": "auto_spin",
+    "confidence": 1,
+    "pX1": 0.337,
+    "pY1": 0.85,
+    "pX2": 0.358,
+    "pY2": 0.889
+  },
+  {
+    "name": "Turbo Button",
+    "type": "turbo",
+    "confidence": 1,
+    "pX1": 0.457,
+    "pY1": 0.85,
+    "pX2": 0.478,
+    "pY2": 0.889
+  },
+  {
+    "name": "Sound Button",
+    "type": "sound",
+    "confidence": 1,
+    "pX1": 0.483,
+    "pY1": 0.85,
+    "pX2": 0.504,
+    "pY2": 0.889
+  }
+]

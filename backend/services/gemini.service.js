@@ -1,6 +1,17 @@
 const { GoogleGenAI } = require('@google/genai');
 const fs = require('fs');
+const sharp = require('sharp');
+const path = require('path');
 
+/**
+ * Detects interactive buttons in a game screenshot using Gemini Vision API.
+ * 
+ * Approach adopted from the reference slot-auto implementation:
+ * 1. Thumbnail the image to max 1024x1024 before sending (standardizes input).
+ * 2. Use the official Google `box_2d` prompt format for best accuracy.
+ * 3. Force `response_mime_type: application/json` for clean output.
+ * 4. Return raw 0-1000 normalized coordinates — caller converts to percentages.
+ */
 async function detectButtons(screenshotPath) {
     if (!process.env.GEMINI_API_KEY) {
         throw new Error('GEMINI_API_KEY is missing in .env');
@@ -8,36 +19,48 @@ async function detectButtons(screenshotPath) {
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-    const prompt = `You are a strict, layout-agnostic computer vision AI designed to identify interactive elements on HTML5 Canvas casino games.
+    // ── Thumbnail the image to max 1024x1024 (matches reference approach) ──
+    const thumbPath = screenshotPath.replace('.png', '-thumb.png');
+    await sharp(screenshotPath)
+        .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
+        .toFile(thumbPath);
 
-Analyze this image of a slot casino game. Identify the interactive buttons.
+    const thumbMeta = await sharp(thumbPath).metadata();
+    console.log(`[Gemini] Thumbnail created: ${thumbMeta.width}x${thumbMeta.height}`);
 
-CRITICAL DIRECTIVES:
-1. STRICT IMAGE-BASED DETECTION: Analyze THIS specific image only. Do NOT assume standard layouts.
-2. NORMALIZED SPATIAL COORDINATES: Return bounding box coordinates for each button exactly in the format [ymin, xmin, ymax, xmax], scaled to a 0-1000 grid over the full image dimensions.
-   - [0, 0] is the top-left corner of the image. [1000, 1000] is the bottom-right corner.
-   - The coordinates MUST be proportional to the image width and height. Do not provide absolute pixel values.
-3. ANTI-HALLUCINATION & TEXT FILTER: 
-   - NEVER label static text (like "CREDITS", "BALANCE", "WIN", "WAYS") as interactive buttons!
-   - Ensure the bounding box tightly wraps the interactive icon/circle, NOT the blank space next to it.
-4. VISUAL DICTIONARY - ONLY IDENTIFY THESE:
-   - "Menu": Usually a hamburger icon (≡) or gear/settings icon.
-   - "Spin": The largest circular button, usually in the bottom center. Often has a circular arrow or play symbol.
-   - "Auto Spin": A smaller circular arrow icon or "AUTO" text, usually next to Spin.
-   - "Increase Bet": A plus sign (+) icon.
-   - "Decrease Bet": A minus sign (-) icon.
-   - "Max Bet": A button containing the text "MAX" or "MAX BET".
-   - "Turbo": A lightning bolt (⚡) icon.
-   - "Sound": A speaker icon (🔊/🔈).
-5. CLASSIFICATION & CONFIDENCE: Assign a precise 'type' and a 'confidence' score (0.0 to 1.0). If you are unsure, do NOT return the button.
+    // ── Prompt (adopted from reference slot-auto) ──
+    // Focus specifically on these UI buttons/elements in this slot game interface:
+    // - Spin button (the large circular play/arrow button)
+    // - Autospin (if present, circular arrows or auto-play icon)  
+    // - Bet Increment (plus + button)
+    // - Bet Decrement (minus - button)
+    // - Max Bet button
+    // - Menu button (hamburger icon, usually bottom-left)
+    // - Sound/speaker icon
+    // - Turbo/lightning bolt icon
+    const prompt = `You are analyzing a screenshot of a slot casino game. Your ONLY job is to locate exactly these 8 button types — NOTHING ELSE.
 
-Return ONLY a raw valid JSON array. Each object MUST have this exact structure:
-{
-  "name": "Exact Button Name (e.g. Spin Button)",
-  "type": "spin|auto_spin|turbo|min_bet|max_bet|increase_bet|decrease_bet|menu|sound",
-  "confidence": <float>,
-  "ymin": <int 0-1000>, "xmin": <int 0-1000>, "ymax": <int 0-1000>, "xmax": <int 0-1000>
-}`;
+ALLOWED BUTTONS (use these EXACT labels):
+1. "Menu" — hamburger icon (≡) or gear/settings icon
+2. "Spin" — the LARGEST circular button, usually bottom-center, with a play/arrow symbol
+3. "Auto Spin" — smaller circular arrows icon or "AUTO" text, near the Spin button
+4. "Increase Bet" — a plus sign (+) icon
+5. "Decrease Bet" — a minus sign (-) icon  
+6. "Max Bet" — button with text "MAX" or "MAX BET"
+7. "Turbo" — lightning bolt (⚡) icon
+8. "Sound" — speaker icon (🔊/🔈)
+
+STRICT RULES:
+- Return ONLY buttons from the list above. If a button type is not visible, DO NOT invent it.
+- NEVER detect static text labels like "CREDITS", "BALANCE", "WIN", "BET", "WAYS", or game logos.
+- NEVER detect reel symbols, decorative icons, or non-interactive elements.
+- Each bounding box must TIGHTLY wrap the button icon only — no extra padding.
+- Use the EXACT label strings listed above (e.g., "Spin", "Menu", not "Spin Button" or "Menu Icon").
+
+OUTPUT FORMAT:
+Return a JSON array. Each object must have:
+- "label": one of the 8 exact strings above
+- "box_2d": [ymin, xmin, ymax, xmax] normalized to 0-1000 grid`;
 
     let rawText = '';
     let retries = 3;
@@ -45,59 +68,74 @@ Return ONLY a raw valid JSON array. Each object MUST have this exact structure:
 
     while (retries > 0) {
         try {
-            const imageData = Buffer.from(fs.readFileSync(screenshotPath)).toString('base64');
-            
+            const imageData = Buffer.from(fs.readFileSync(thumbPath)).toString('base64');
+
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: [
-                    { 
-                        role: 'user', 
+                    {
+                        role: 'user',
                         parts: [
-                            { text: prompt },
-                            { inlineData: { mimeType: 'image/png', data: imageData } }
+                            { inlineData: { mimeType: 'image/png', data: imageData } },
+                            { text: prompt }
                         ]
                     }
                 ],
                 config: {
-                    responseMimeType: "application/json",
-                    temperature: 0.1
+                    responseMimeType: 'application/json',
+                    thinkingConfig: { thinkingBudget: 0 }
                 }
             });
 
-            // Handle both property and function variants of .text
             rawText = typeof response.text === 'function' ? response.text() : response.text;
-            break; // Success, exit retry loop
-            
+            break;
         } catch (error) {
             console.error(`Gemini API Error (${retries} retries left):`, error.message);
             retries--;
             if (retries === 0) throw error;
             console.log(`Waiting ${delay}ms before retrying...`);
             await new Promise(resolve => setTimeout(resolve, delay));
-            delay *= 2; // Exponential backoff
+            delay *= 2;
         }
     }
 
+    // Clean up thumbnail
+    try { fs.unlinkSync(thumbPath); } catch (e) { }
+
     try {
-        // Strip any accidental markdown wrapping
         rawText = rawText.trim()
             .replace(/^```json\s*/i, '')
             .replace(/^```\s*/i, '')
             .replace(/\s*```$/i, '');
 
-        const buttons = JSON.parse(rawText);
-        
-        if (!Array.isArray(buttons)) {
+        const items = JSON.parse(rawText);
+
+        if (!Array.isArray(items)) {
             throw new Error('Gemini did not return a JSON array.');
         }
 
+        // Normalize from reference's box_2d format to our internal format
+        const buttons = items
+            .filter(item => item.box_2d && item.box_2d.length === 4)
+            .map(item => {
+                const [ymin, xmin, ymax, xmax] = item.box_2d;
+                return {
+                    name: item.label || 'Unknown',
+                    // Keep raw 0-1000 values — these get converted to 0-1 percentages upstream
+                    ymin: Math.min(ymin, ymax),
+                    xmin: Math.min(xmin, xmax),
+                    ymax: Math.max(ymin, ymax),
+                    xmax: Math.max(xmin, xmax)
+                };
+            });
+
+        console.log(`[Gemini] Parsed ${buttons.length} buttons from response`);
         return buttons;
 
     } catch (parseError) {
         console.error('Gemini Parse Error. Raw Response:', rawText);
         throw parseError;
     }
-
 }
 
 module.exports = { detectButtons };

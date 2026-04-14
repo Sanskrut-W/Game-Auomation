@@ -1,0 +1,254 @@
+[
+  {
+    "name": "Jackpot display",
+    "pX1": 0.077,
+    "pY1": 0.078,
+    "pX2": 0.321,
+    "pY2": 0.608
+  },
+  {
+    "name": "Poseidon Ancient Fortunes",
+    "pX1": 0.775,
+    "pY1": 0.187,
+    "pX2": 0.888,
+    "pY2": 0.258
+  },
+  {
+    "name": "Mega jackpot",
+    "pX1": 0.102,
+    "pY1": 0.14,
+    "pX2": 0.281,
+    "pY2": 0.228
+  },
+  {
+    "name": "Major jackpot",
+    "pX1": 0.102,
+    "pY1": 0.278,
+    "pX2": 0.279,
+    "pY2": 0.353
+  },
+  {
+    "name": "Minor jackpot",
+    "pX1": 0.11,
+    "pY1": 0.386,
+    "pX2": 0.276,
+    "pY2": 0.469
+  },
+  {
+    "name": "Mini jackpot",
+    "pX1": 0.113,
+    "pY1": 0.492,
+    "pX2": 0.271,
+    "pY2": 0.575
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.474,
+    "pY1": 0.287,
+    "pX2": 0.574,
+    "pY2": 0.571
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.342,
+    "pY1": 0.691,
+    "pX2": 0.423,
+    "pY2": 0.776
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.678,
+    "pY1": 0.108,
+    "pX2": 0.776,
+    "pY2": 0.252
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.678,
+    "pY1": 0.283,
+    "pX2": 0.759,
+    "pY2": 0.571
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.577,
+    "pY1": 0.287,
+    "pX2": 0.68,
+    "pY2": 0.431
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.765,
+    "pY1": 0.287,
+    "pX2": 0.856,
+    "pY2": 0.478
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.597,
+    "pY1": 0.575,
+    "pX2": 0.677,
+    "pY2": 0.689
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.513,
+    "pY1": 0.571,
+    "pX2": 0.593,
+    "pY2": 0.689
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.429,
+    "pY1": 0.571,
+    "pX2": 0.508,
+    "pY2": 0.715
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.577,
+    "pY1": 0.422,
+    "pX2": 0.675,
+    "pY2": 0.571
+  },
+  {
+    "name": "Open treasure chest",
+    "pX1": 0.084,
+    "pY1": 0.584,
+    "pX2": 0.281,
+    "pY2": 0.915
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.597,
+    "pY1": 0.715,
+    "pX2": 0.68,
+    "pY2": 0.856
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.429,
+    "pY1": 0.426,
+    "pX2": 0.51,
+    "pY2": 0.571
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.681,
+    "pY1": 0.575,
+    "pX2": 0.759,
+    "pY2": 0.715
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.342,
+    "pY1": 0.531,
+    "pX2": 0.426,
+    "pY2": 0.695
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.763,
+    "pY1": 0.478,
+    "pX2": 0.853,
+    "pY2": 0.672
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.763,
+    "pY1": 0.672,
+    "pX2": 0.853,
+    "pY2": 0.856
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.342,
+    "pY1": 0.431,
+    "pX2": 0.423,
+    "pY2": 0.531
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.51,
+    "pY1": 0.715,
+    "pX2": 0.593,
+    "pY2": 0.856
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.426,
+    "pY1": 0.715,
+    "pX2": 0.508,
+    "pY2": 0.856
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.342,
+    "pY1": 0.776,
+    "pX2": 0.423,
+    "pY2": 0.856
+  },
+  {
+    "name": "Slot symbols",
+    "pX1": 0.68,
+    "pY1": 0.632,
+    "pX2": 0.763,
+    "pY2": 0.755
+  },
+  {
+    "name": "Menu button",
+    "pX1": 0.069,
+    "pY1": 0.909,
+    "pX2": 0.131,
+    "pY2": 0.982
+  },
+  {
+    "name": "Autospin",
+    "pX1": 0.539,
+    "pY1": 0.918,
+    "pX2": 0.584,
+    "pY2": 0.982
+  },
+  {
+    "name": "Bet Decrement",
+    "pX1": 0.274,
+    "pY1": 0.914,
+    "pX2": 0.317,
+    "pY2": 0.982
+  },
+  {
+    "name": "Bet Increment",
+    "pX1": 0.346,
+    "pY1": 0.914,
+    "pX2": 0.39,
+    "pY2": 0.982
+  },
+  {
+    "name": "Spin button",
+    "pX1": 0.467,
+    "pY1": 0.874,
+    "pX2": 0.53,
+    "pY2": 0.996
+  },
+  {
+    "name": "Max Bet button",
+    "pX1": 0.417,
+    "pY1": 0.914,
+    "pX2": 0.464,
+    "pY2": 0.982
+  },
+  {
+    "name": "Sound/speaker icon",
+    "pX1": 0.85,
+    "pY1": 0.914,
+    "pX2": 0.893,
+    "pY2": 0.982
+  },
+  {
+    "name": "Turbo/lightning bolt icon",
+    "pX1": 0.793,
+    "pY1": 0.914,
+    "pX2": 0.831,
+    "pY2": 0.982
+  }
+]
